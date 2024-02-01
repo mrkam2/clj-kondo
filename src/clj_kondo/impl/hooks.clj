@@ -183,7 +183,8 @@
                                               x)))]
                          (binding [*ctx* ctx]
                            ;; require isn't thread safe in SCI
-                           (locking load-lock (sci/eval-string* sci-ctx code)))))
+                           (merge {:defined-by (symbol (name ns-sym) (name var-sym))}
+                             (locking load-lock (sci/eval-string* sci-ctx code))))))
                      (when-let [x (or (get-in hook-cfg [:macroexpand sym])
                                       (some (fn [group-sym]
                                               (get-in hook-cfg [:macroexpand (symbol (str group-sym)
@@ -205,7 +206,8 @@
                                          ;; require isn't thread safe in SCI
                                          (sci/eval-string* sci-ctx code)))]
                            (fn [{:keys [node]}]
-                             {:node (macroexpand macro node (:bindings *ctx*))})))))))
+                             {:node (macroexpand macro node (:bindings *ctx*))
+                              :defined-by (symbol (name ns-sym) (name var-sym))})))))))
                (catch Exception e
                  (binding [*out* *err*]
                    (println "WARNING: error while trying to read hook for"
